@@ -62,9 +62,11 @@ class Application
                 $newFile .= substr($content, $offset);
 
                 if (sha1($content) !== sha1($newFile)) {
-                    $d = file_put_contents($file, $newFile);
-                    if (false === $d) {
-                        //TODO warning
+                    if (true !== $this->options['dry-run']) {
+                        $d = file_put_contents($file, $newFile);
+                        if (false === $d) {
+                            //TODO warning
+                        }
                     }
                     echo sprintf("Fixed %s\n", (string) $file);
                 }
@@ -134,9 +136,13 @@ class Application
             $c -= substr_count($line, ']');
 
             if ($c > 0) {
-                $line = str_repeat($this->config->getIdent(), $ident).$line;
+                if ($ident > 0) {
+                    $line = str_repeat($this->config->getIdent(), $ident).$line;
+                }
             } else {
-                $line = str_repeat($this->config->getIdent(), $ident + $c).$line;
+                if ($ident + $c > 0) {
+                    $line = str_repeat($this->config->getIdent(), $ident + $c).$line;
+                }
             }
 
             $ident += $c;

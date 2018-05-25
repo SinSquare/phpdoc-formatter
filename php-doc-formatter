@@ -8,6 +8,7 @@ $options = [
     'version' => false,
     'ident' => '    ',
     'newline' => null,
+    'dry-run' => false,
 ];
 $aliases = [
     'e' => 'exclude',
@@ -122,6 +123,8 @@ if (null !== $options['newline']) {
 }
 
 $finder = new Finder();
+$finder->files()->name('*.php');
+
 foreach ($paths as $p) {
     $finder->in($p);
 }
