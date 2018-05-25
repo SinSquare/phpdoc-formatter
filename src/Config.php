@@ -16,6 +16,7 @@ class Config
     private $rules;
     private $ident;
     private $newLine;
+    private $dryRun;
 
     private function __construct()
     {
@@ -108,6 +109,26 @@ class Config
     public function setNewLine(string $newLine)
     {
         $this->newLine = $newLine;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getDryRun()
+    {
+        return $this->dryRun;
+    }
+
+    /**
+     * @param mixed $dryRun
+     *
+     * @return self
+     */
+    public function setDryRun($dryRun)
+    {
+        $this->dryRun = $dryRun;
 
         return $this;
     }

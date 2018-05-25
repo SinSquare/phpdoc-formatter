@@ -62,7 +62,7 @@ class Application
                 $newFile .= substr($content, $offset);
 
                 if (sha1($content) !== sha1($newFile)) {
-                    if (true !== $this->options['dry-run']) {
+                    if (true !== $this->config->getDryRun()) {
                         $d = file_put_contents($file, $newFile);
                         if (false === $d) {
                             //TODO warning

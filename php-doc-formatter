@@ -115,6 +115,7 @@ use Symfony\Component\Finder\Finder;
 $config = Config::create();
 
 $config->setIdent($options['ident']);
+$config->setDryRun($options['dry-run']);
 if (null !== $options['newline']) {
     $nl = $options['newline'];
     $nl = str_replace('\\n', "\n", $nl);
