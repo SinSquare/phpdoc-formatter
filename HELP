@@ -1,0 +1,11 @@
+Usage: phpdoc-formatter [--option value] [/path/to/project ...]
+Options:
+  --exclude (-e)    Exclude path(s)
+                    ex: --exclude vendor,library
+  --version (-v)    Displays the version
+
+  --ident (-i)      Sets the ident character(s)
+                    ex: --ident "    "
+  --newline (-n)    Sets the newline character(s)
+                    ex: --ident "\r\n"
+  --help (-h)       Displays this message

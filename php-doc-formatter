@@ -1,0 +1,137 @@
+#!/usr/bin/env php
+<?php
+error_reporting(E_ALL);
+
+$options = [
+    'exclude' => [],
+    'help' => false,
+    'version' => false,
+    'ident' => '    ',
+    'newline' => null,
+];
+$aliases = [
+    'e' => 'exclude',
+    'v' => 'version',
+    'h' => 'help',
+    'i' => 'ident',
+    'n' => 'newline',
+];
+$needsArgument = [
+    'exclude',
+    'ident',
+    'newline',
+];
+
+$paths = array();
+$error = false;
+
+try {
+    // Parse cli arguments
+    for ($i = 1; $i < $argc; ++$i) {
+        $arg = $argv[$i];
+        if ('--' === substr($arg, 0, 2)) { // longopt
+            $option = substr($arg, 2);
+        } elseif ('-' === $arg[0]) { // shortopt
+            if (array_key_exists(substr($arg, 1), $aliases)) {
+                $option = $aliases[$arg[1]];
+            } else {
+                throw new Exception('Unknown option: "'.$arg.'"');
+            }
+        } else {
+            $paths[] = $arg;
+            continue;
+        }
+
+        if (false === array_key_exists($option, $options)) {
+            throw new Exception('Unknown option: "'.$arg.'"');
+        }
+        if (in_array($option, $needsArgument)) {
+            if (empty($argv[$i + 1]) || $argv[$i + 1][0] === '-') {
+                throw new Exception('Missing argument for "'.$arg.'"');
+            }
+            if (is_array($options[$option])) {
+                $options[$option][] = $argv[$i + 1];
+            } else {
+                $options[$option] = $argv[$i + 1];
+            }
+            ++$i;
+        } else {
+            $options[$option] = true;
+        }
+    }
+} catch (Exception $e) {
+    $error = $e->getMessage();
+}
+
+$version = trim(file_get_contents(__DIR__.'/VERSION'));
+if ($options['version']) {
+    echo $version, PHP_EOL;
+    exit;
+}
+
+error_log('');
+error_log('phpDoc Formatter '.$version);
+error_log('------------'.str_repeat('-', strlen($version)));
+
+if ($error) {
+    error_log('[ERROR] '.$error);
+    $options['help'] = true; // Show help
+}
+if ($options['help']) {
+    $help = trim(file_get_contents(__DIR__.'/HELP'));
+    error_log($help);
+    exit;
+}
+
+$exclude = null;
+if ($options['exclude']) {
+    $exclude = $options['exclude'];
+    if (false !== strpos($exclude[0], ',')) {
+        $exploded = explode(',', $exclude[0]);
+        error_log('[NOTICE] Comma-separated exclude paths are deprecated, use multiple --exclude statements: --exclude '.$exploded[0].' --exclude '.$exploded[1]);
+        $exclude[0] = array_shift($exploded);
+        $exclude = array_merge($exclude, $exploded);
+    }
+}
+
+if (0 === count($paths)) {
+    $paths[] = getcwd();
+    echo "Scanning files in '".$paths[0]."' ...\n";
+}
+
+$autoloader = false;
+foreach (array(__DIR__.'/../../autoload.php', __DIR__.'/../vendor/autoload.php', __DIR__.'/vendor/autoload.php') as $file) {
+    if (file_exists($file)) {
+        require_once $file;
+        break;
+    }
+}
+
+use PhpDocFormatter\Application;
+use PhpDocFormatter\Config;
+use Symfony\Component\Finder\Finder;
+
+$config = Config::create();
+
+$config->setIdent($options['ident']);
+if (null !== $options['newline']) {
+    $nl = $options['newline'];
+    $nl = str_replace('\\n', "\n", $nl);
+    $nl = str_replace('\\r', "\r", $nl);
+    $config->setNewLine($nl);
+}
+
+$finder = new Finder();
+foreach ($paths as $p) {
+    $finder->in($p);
+}
+if (is_array($exclude) && count($exclude) > 0) {
+    foreach ($exclude as $p) {
+        $finder->exclude($p);
+    }
+}
+
+$config->setFinder($finder);
+
+$app = new Application($config);
+$app->fixFiles();
