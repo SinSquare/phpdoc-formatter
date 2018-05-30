@@ -136,10 +136,15 @@ class Application
             if ($c > 0) {
                 $line = str_repeat($this->config->getIdent(), $ident).$line;
             } else {
-                $line = str_repeat($this->config->getIdent(), $ident + $c).$line;
+                $i = $ident + $c > 0 ? $ident + $c : 0;
+                $line = str_repeat($this->config->getIdent(), $i).$line;
             }
 
             $ident += $c;
+            if($ident < 0) {
+                //TODO warning - possible open-close tag mismatch
+                $ident = 0;
+            }
         }
 
         return implode("\n", $lines);
