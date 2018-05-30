@@ -153,9 +153,8 @@ class Application
         foreach ($lines as $key => &$line) {
             $line = trim($line, "\r");
             $line = str_repeat(' ', $ident).' * '.$line;
+            $line = rtrim($line);
         }
-        
-        $line = rtrim($line);
 
         $doc = implode($newLine, $lines);
         $doc = str_repeat(' ', $ident).'/**'.$newLine.$doc;
