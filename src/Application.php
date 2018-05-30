@@ -56,7 +56,7 @@ class Application
                 $offset = 0;
                 foreach ($docComments as $key => $value) {
                     $newFile .= substr($content, $offset, $value['offset'] - $offset);
-                    $offset = $value['offset'] + $value['length'] + 1;
+                    $offset = $value['offset'] + $value['length'];
                     $newFile .= $value['formatted'];
                 }
                 $newFile .= substr($content, $offset);
