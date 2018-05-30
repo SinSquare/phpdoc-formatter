@@ -154,6 +154,8 @@ class Application
             $line = trim($line, "\r");
             $line = str_repeat(' ', $ident).' * '.$line;
         }
+        
+        $line = rtrim($line);
 
         $doc = implode($newLine, $lines);
         $doc = str_repeat(' ', $ident).'/**'.$newLine.$doc;
