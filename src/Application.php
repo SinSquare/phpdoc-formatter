@@ -2,6 +2,7 @@
 
 /*
  * This file is part of the PHPDoc Formatter application.
+ * https://github.com/SinSquare/phpdoc-formatter
  *
  * (c) Ábel Katona
  *
@@ -12,15 +13,27 @@ namespace PhpDocFormatter;
 
 use Symfony\Component\Stopwatch\Stopwatch;
 
+/**
+ * @author Abel Katona
+ */
 class Application
 {
     private $config;
 
+    /**
+     * @param Config $config
+     *
+     * @throws \Exception if the config is not valid
+     */
     public function __construct(Config $config)
     {
+        $config->validate();
         $this->config = $config;
     }
 
+    /**
+     * Fix all the files that the finder returns.
+     */
     public function fixFiles()
     {
         $stopwatch = new Stopwatch();
@@ -48,18 +61,11 @@ class Application
 
                     $norm = $this->getDocBody($value);
                     $norm = $this->normalizeDocBody($norm);
-                    $norm = $this->formatDocBody($norm, $ident);
+                    $norm = $this->reconstructDocBody($norm, $ident);
                     $docComments[$key]['formatted'] = $norm;
                 }
 
-                $newFile = '';
-                $offset = 0;
-                foreach ($docComments as $key => $value) {
-                    $newFile .= substr($content, $offset, $value['offset'] - $offset);
-                    $offset = $value['offset'] + $value['length'];
-                    $newFile .= $value['formatted'];
-                }
-                $newFile .= substr($content, $offset);
+                $newFile = $this->reconstructFile($file, $docComments);
 
                 if (sha1($content) !== sha1($newFile)) {
                     $d = file_put_contents($file, $newFile);
@@ -72,6 +78,31 @@ class Application
         }
     }
 
+    /**
+     * @param string   $file        File content
+     * @param string[] $docComments
+     */
+    private function reconstructFile(string $content, array $docComments)
+    {
+        $newFile = '';
+        $offset = 0;
+        foreach ($docComments as $key => $value) {
+            $newFile .= substr($content, $offset, $value['offset'] - $offset);
+            $offset = $value['offset'] + $value['length'];
+            $newFile .= $value['formatted'];
+        }
+        $newFile .= substr($content, $offset);
+
+        return $newFile;
+    }
+
+    /**
+     * Gets the file's dominant line ending.
+     *
+     * @param string $file File content
+     *
+     * @return string Dominant line ending
+     */
     private function getFileDominantLineEnding(string $file)
     {
         static $eols = array(
@@ -88,33 +119,47 @@ class Application
             "\0x0A",       // [ASCII] LF: Multics, Unix, Unix-like, BeOS, Amiga, RISC OS
             "\0x0D",       // [ASCII] CR: Commodore 8-bit, BBC Acorn, TRS-80, Apple II, Mac OS <=v9, OS-9
             "\0x1E",       // [ASCII] RS: QNX (pre-POSIX)
-            //"\0x76",       // [?????] NEWLINE: ZX80, ZX81 [DEPRECATED]
             "\0x15",       // [EBCDEIC] NEL: OS/390, OS/400
         );
         $cur_cnt = 0;
         $cur_eol = "\n";
-        foreach($eols as $eol){
-            if(($count = substr_count($file, $eol)) > $cur_cnt){
+        foreach ($eols as $eol) {
+            if (($count = substr_count($file, $eol)) > $cur_cnt) {
                 $cur_cnt = $count;
                 $cur_eol = $eol;
             }
         }
+
         return $cur_eol;
     }
 
+    /**
+     * Gets the opening tag's ident.
+     *
+     * @param string $doc The whole unformatted PHPDoc block
+     *
+     * @return string The whitespace before the opening tag
+     */
     private function getDocBodyIdent(string $doc)
     {
         $lines = explode("\n", $doc);
 
         foreach ($lines as $line) {
-            if (preg_match("#/\*\*#", $line, $matches, PREG_OFFSET_CAPTURE)) {
-                return $matches[0][1];
+            if (preg_match("#([^/\*]*)/\*\*#", $line, $matches)) {
+                return $matches[1];
             }
         }
 
         return null;
     }
 
+    /**
+     * Gets the body of the PHPDoc without the opening tags.
+     *
+     * @param string $doc The whole unformatted PHPDoc block
+     *
+     * @return string
+     */
     private function getDocBody(string $doc)
     {
         $lines = explode("\n", $doc);
@@ -136,6 +181,13 @@ class Application
         return $lines;
     }
 
+    /**
+     * Fixing the idention of the body.
+     *
+     * @param string $doc The PHPDoc body without the opening tags
+     *
+     * @return string
+     */
     private function normalizeDocBody(string $doc)
     {
         $lines = explode("\n", $doc);
@@ -159,7 +211,7 @@ class Application
             }
 
             $ident += $c;
-            if($ident < 0) {
+            if ($ident < 0) {
                 //TODO warning - possible open-close tag mismatch
                 $ident = 0;
             }
@@ -168,24 +220,39 @@ class Application
         return implode("\n", $lines);
     }
 
-    private function formatDocBody(string $doc, int $ident)
+    /**
+     * Reconstruct the the body (adding opening and closing tag with correct idention).
+     *
+     * @param string $doc   The PHPDoc body without the opening tags
+     * @param string $ident The opening tag's ident
+     *
+     * @return string The reconstructed PHPDoc
+     */
+    private function reconstructDocBody(string $doc, string $ident)
     {
         $newLine = $this->config->getNewLine();
         $lines = explode("\n", $doc);
 
         foreach ($lines as $key => &$line) {
             $line = trim($line, "\r");
-            $line = str_repeat(' ', $ident).' * '.$line;
+            $line = $ident.' * '.$line;
             $line = rtrim($line);
         }
 
         $doc = implode($newLine, $lines);
-        $doc = str_repeat(' ', $ident).'/**'.$newLine.$doc;
-        $doc .= $newLine.str_repeat(' ', $ident).' */'.$newLine;
+        $doc = $ident.'/**'.$newLine.$doc;
+        $doc .= $newLine.$ident.' */'.$newLine;
 
         return $doc;
     }
 
+    /**
+     * Finds all the PHPDoc blocks in the file.
+     *
+     * @param string $file File content
+     *
+     * @return string[] Array of PHPDoc blocks
+     */
     private function findAllDocDomment(string $file)
     {
         $regex = "#[\h]*/\*\*[\s]?([\s]*\*[^\n]*[\s]?)+[\h]*\*/[\s]?#";

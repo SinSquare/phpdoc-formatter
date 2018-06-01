@@ -103,8 +103,13 @@ $autoloader = false;
 foreach (array(__DIR__.'/../../autoload.php', __DIR__.'/../vendor/autoload.php', __DIR__.'/vendor/autoload.php') as $file) {
     if (file_exists($file)) {
         require_once $file;
+        $autoloader = true;
         break;
     }
+}
+if(!$autoloader) {
+    error_log('[ERROR] Could not locate the autoloader. Check if you have it.');
+    exit();
 }
 
 use PhpDocFormatter\Application;
@@ -132,6 +137,12 @@ if (is_array($exclude) && count($exclude) > 0) {
 }
 
 $config->setFinder($finder);
+try {
+    $config->validate();
+} catch(\Exception $ex) {
+    error_log(sprintf('[ERROR] %s', $ex->getMessage()));
+    exit();
+}
 
 $app = new Application($config);
 $app->fixFiles();

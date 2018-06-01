@@ -2,6 +2,7 @@
 
 $fileHeaderComment = <<<COMMENT
 This file is part of the PHPDoc Formatter application.
+https://github.com/SinSquare/phpdoc-formatter
 
 (c) Ábel Katona
 
@@ -9,10 +10,10 @@ This source file is subject to the MIT license that is bundled with this source 
 COMMENT;
 
 $finder = PhpCsFixer\Finder::create()
-    ->in(__DIR__.'/src')
-    ->in(__DIR__.'/tests')
-    ->exclude('Resources')
-    ->exclude('Resources2')
+    ->in(__DIR__)
+    ->exclude('tests/Resources')
+    ->exclude('tests/Resources2')
+    ->files()
 ;
 
 return PhpCsFixer\Config::create()

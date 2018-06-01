@@ -2,6 +2,7 @@
 
 /*
  * This file is part of the PHPDoc Formatter application.
+ * https://github.com/SinSquare/phpdoc-formatter
  *
  * (c) Ábel Katona
  *
@@ -10,6 +11,9 @@
 
 namespace PhpDocFormatter;
 
+/**
+ * @author Abel Katona
+ */
 class Config
 {
     private $finder;
@@ -19,18 +23,44 @@ class Config
 
     private function __construct()
     {
+        $this->rules = array();
+        $this->ident = '    ';
     }
 
+    /**
+     * @return Config Default config
+     */
     public static function create()
     {
         $c = new self();
-        $c->setIdent('    ');
 
         return $c;
     }
 
     /**
-     * @return mixed
+     * Validates the configuration.
+     *
+     * @throws \Exception if the config is not valid
+     */
+    public function validate()
+    {
+        if (preg_match('/^[^\h]*$/', $this->ident)) {
+            throw new \Exception('\'ident\' must contain whitespace only!');
+        }
+
+        if (null !== $this->newLine) {
+            if (preg_match('/^[^\n\r]*$/', $this->newLine)) {
+                throw new \Exception('\'newLine\' must contain new line and carriage return only!');
+            }
+        }
+
+        if (!is_array($this->finder) && !$this->finder instanceof \Traversable) {
+            throw new \Exception("'finder' must be an array or a Traversable object!");
+        }
+    }
+
+    /**
+     * @return Finder|Traversable
      */
     public function getFinder()
     {
@@ -38,22 +68,19 @@ class Config
     }
 
     /**
-     * @param mixed $finder
+     * @param Finder|Traversable $finder
      *
      * @return self
      */
     public function setFinder($finder)
     {
-        if (!is_array($finder) && !$finder instanceof \Traversable) {
-            throw new \InvalidArgumentException("'finder' must be an array or a Traversable class");
-        }
         $this->finder = $finder;
 
         return $this;
     }
 
     /**
-     * @return mixed
+     * @return array
      */
     public function getRules()
     {
@@ -61,7 +88,7 @@ class Config
     }
 
     /**
-     * @param mixed $rules
+     * @param array $rules
      *
      * @return self
      */
@@ -73,7 +100,7 @@ class Config
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getIdent()
     {
@@ -81,7 +108,7 @@ class Config
     }
 
     /**
-     * @param mixed $ident
+     * @param string $ident
      *
      * @return self
      */
@@ -93,7 +120,7 @@ class Config
     }
 
     /**
-     * @return mixed
+     * @return string|null
      */
     public function getNewLine()
     {
@@ -101,7 +128,7 @@ class Config
     }
 
     /**
-     * @param mixed $newLine
+     * @param string $newLine
      *
      * @return self
      */
