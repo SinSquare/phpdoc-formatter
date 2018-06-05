@@ -1,0 +1,13 @@
+<?php
+
+$finder = (new Symfony\Component\Finder\Finder())
+    ->in(__DIR__)
+    ->exclude('tests/Resources')
+    ->exclude('tests/Resources2')
+    ->files()
+;
+
+return PhpDocFormatter\Config::create()
+    ->setIdent("\t")
+    ->setFinder($finder)
+;

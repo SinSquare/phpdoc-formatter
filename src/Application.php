@@ -65,7 +65,7 @@ class Application
                     $docComments[$key]['formatted'] = $norm;
                 }
 
-                $newFile = $this->reconstructFile($file, $docComments);
+                $newFile = $this->reconstructFile($content, $docComments);
 
                 if (sha1($content) !== sha1($newFile)) {
                     $d = file_put_contents($file, $newFile);

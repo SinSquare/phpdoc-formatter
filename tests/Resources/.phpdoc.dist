@@ -1,0 +1,9 @@
+<?php
+
+$finder = array("somepath");
+
+return PhpDocFormatter\Config::create()
+    ->thisShouldNotRun
+    ->setIndent("  ")
+    ->setFinder($finder)
+;

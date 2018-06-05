@@ -32,9 +32,7 @@ class Config
      */
     public static function create()
     {
-        $c = new self();
-
-        return $c;
+        return new static();
     }
 
     /**
